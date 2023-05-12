@@ -30,16 +30,20 @@ async function run() {
 
     const serviceCollectiton = client.db('carDoctorsServices').collection('services');
 
-    app.get('/services', async(req, res) => {
+    app.get('/services', async (req, res) => {
       const cursor = serviceCollectiton.find();
       const result = await cursor.toArray();
       res.send(result);
     })
 
-    app.get('/services/:id', async(req, res) => {
+
+    app.get('/services/:id', async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)};
-      const result = await serviceCollectiton.findOne(query);
+      const query = { _id: new ObjectId(id) };
+      const options = {
+        projection: { title: 1, price: 1, service_id: 1 }
+      }
+      const result = await serviceCollectiton.findOne(query, options)
       res.send(result)
     })
 
