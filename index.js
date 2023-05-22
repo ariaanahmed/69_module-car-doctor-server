@@ -26,13 +26,13 @@ const client = new MongoClient(uri, {
 
 const verifyJWT = (req, res, next) => {
   const authorization = req.headers.authorization;
-  if(!authorization){
-    return res.status(401).send({error: true, message: 'unauthorized access'})
+  if (!authorization) {
+    return res.status(401).send({ error: true, message: 'unauthorized access' })
   }
   const token = authorization.split(' ')[1];
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decoded) => {
-    if(error){
-      return res.status(401).send({error: true, message: 'unauthorized access'})
+    if (error) {
+      return res.status(401).send({ error: true, message: 'unauthorized access' })
     }
     req.decoded = decoded;
     next();
@@ -51,13 +51,19 @@ async function run() {
     app.post('/jwt', (req, res) => {
       const user = req.body;
       console.log(user);
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '5s'});
-      res.send({token})
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '5s' });
+      res.send({ token })
     })
 
     // services routes
     app.get('/services', async (req, res) => {
-      const cursor = serviceCollection.find();
+      const sort = req.query.sort;
+      const query = {price: {$gt: 50, $lte:200}};
+      const options = {
+        // sort matched documents in descending order by rating
+        sort: { "price": sort === 'asc' ? 1 : -1 },
+      };
+      const cursor = serviceCollection.find(query, options);
       const result = await cursor.toArray();
       res.send(result)
     });
@@ -78,8 +84,8 @@ async function run() {
       const decoded = req.decoded;
       console.log('come back after verify', decoded)
 
-      if(decoded.email !== req.query.email){
-        return res.status(403).send({error: 1, message: 'forbidden access'})
+      if (decoded.email !== req.query.email) {
+        return res.status(403).send({ error: 1, message: 'forbidden access' })
       }
 
       let query = {};
